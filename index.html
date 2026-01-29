@@ -3,34 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sweets Tower - 第26弾</title>
+    <title>Sweets Tower - v26.1</title>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; overflow: hidden; background: #fce4ec; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
         
-        /* 上下広告エリア */
-        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        /* 広告エリアを100pxに縮小してスペースを確保 */
+        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 100px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
         #ad-top { top: 0; } #ad-bottom { bottom: 0; }
-        iframe { border: none; width: 100%; height: 150px; }
+        iframe { border: none; width: 100%; height: 100px; }
 
-        /* ゲームエリア */
-        #game-outer { position: absolute; top: 150px; bottom: 150px; left: 0; right: 0; background: #fff1f2; overflow: hidden; }
+        #game-outer { position: absolute; top: 100px; bottom: 100px; left: 0; right: 0; background: #fff1f2; overflow: hidden; }
         canvas { display: block; width: 100%; height: 100%; }
         #ui { position: absolute; top: 10px; left: 0; width: 100%; text-align: center; color: #ad1457; font-size: 24px; font-weight: bold; pointer-events: none; z-index: 10; text-shadow: 1px 1px 0 white; }
 
-        /* メニュー画面（スクロール対応） */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(255,255,255,0.95); display: flex; flex-direction: column; 
+            background: rgba(255,255,255,0.96); display: flex; flex-direction: column; 
             align-items: center; justify-content: flex-start; z-index: 50; 
-            padding: 10px 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding: 5px 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
 
-        #ad-middle-container { width: 300px; height: 140px; background: #000; margin: 10px 0; display: none; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0; }
+        /* 中央広告の高さも少し抑える */
+        #ad-middle-container { width: 300px; height: 120px; background: #000; margin: 5px 0; display: none; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0; }
 
-        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 10px; padding-bottom: 30px; }
-        #goButton { padding: 15px 0; font-size: 22px; background: #f06292; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; width: 240px; box-shadow: 0 5px #d81b60; }
-        .link-btn { padding: 12px 0; font-size: 14px; background: #9b59b6; border: none; border-radius: 50px; color: white; font-weight: bold; text-decoration: none; width: 240px; text-align: center; box-shadow: 0 4px #8e44ad; }
+        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 6px; padding-bottom: 15px; }
+        #goButton { padding: 12px 0; font-size: 18px; background: #f06292; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; width: 200px; box-shadow: 0 4px #d81b60; }
+        .link-btn { padding: 8px 0; font-size: 13px; background: #9b59b6; border: none; border-radius: 50px; color: white; font-weight: bold; text-decoration: none; width: 200px; text-align: center; box-shadow: 0 3px #8e44ad; }
     </style>
 </head>
 <body>
@@ -42,12 +41,9 @@
         <canvas id="gameCanvas"></canvas>
 
         <div id="menuScreen">
-            <h1 id="menuTitle" style="color:#f06292; margin: 5px 0; font-size: 28px;">Sweets Tower</h1>
-            <p id="menuDesc" style="text-align: center; margin: 5px 0; font-size: 14px; color: #880e4f;">
-                タイミングよくタップして<br>パンケーキを高く積もう！🥞
-            </p>
-            
-            <p id="bestScoreText" style="margin: 5px 0; color:#ad1457; font-weight: bold;">BEST: 0</p>
+            <h1 id="menuTitle" style="color:#f06292; margin: 2px 0; font-size: 22px;">Sweets Tower</h1>
+            <p id="menuDesc" style="text-align: center; margin: 2px 0; font-size: 12px; color: #880e4f;">パンケーキを高く積もう！🥞</p>
+            <p id="bestScoreText" style="margin: 2px 0; color:#ad1457; font-weight: bold; font-size: 14px;">BEST: 0</p>
 
             <div id="ad-middle-container">
                 <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
@@ -87,14 +83,13 @@
             menuScreen.style.display = "none";
             gameActive = true;
             score = 0;
-            speed = 3 + (window.innerWidth < 400 ? 1 : 0); // スマホは少し調整
+            speed = 3;
             document.getElementById("ui").innerText = "TOWER: 0";
-            layers = [{x: canvas.width/2 - 75, w: 150, y: canvas.height - 50}];
-            current = { x: 0, w: 150, dir: 1, y: canvas.height - 90 };
+            layers = [{x: canvas.width/2 - 60, w: 120, y: canvas.height - 40}];
+            current = { x: 0, w: 120, dir: 1, y: canvas.height - 80 };
             update();
         };
 
-        // タップ操作
         window.addEventListener("touchstart", (e) => {
             if(!gameActive) return;
             e.preventDefault();
@@ -104,60 +99,30 @@
         function stackLayer() {
             let last = layers[layers.length - 1];
             let diff = current.x - last.x;
-            
-            if(Math.abs(diff) >= current.w) {
-                gameOver();
-                return;
-            }
-            
-            // 重なっている部分だけを残す
-            if(diff > 0) {
-                current.w -= diff;
-            } else {
-                current.w += diff;
-                current.x = last.x;
-            }
-            
+            if(Math.abs(diff) >= current.w) { gameOver(); return; }
+            if(diff > 0) { current.w -= diff; } else { current.w += diff; current.x = last.x; }
             layers.push({x: current.x, y: current.y, w: current.w});
             score++;
             document.getElementById("ui").innerText = "TOWER: " + score;
-            
-            // 上昇演出
-            if(layers.length > 6) {
-                layers.forEach(l => l.y += 40);
-            } else {
-                current.y -= 40;
-            }
-            
-            current.x = 0;
-            speed += 0.15;
-            current.dir = 1;
+            if(layers.length > 6) { layers.forEach(l => l.y += 40); } else { current.y -= 40; }
+            current.x = 0; speed += 0.15;
         }
 
         function update() {
             if(!gameActive) return;
             ctx.clearRect(0,0,canvas.width, canvas.height);
-            
             current.x += speed * current.dir;
             if(current.x + current.w > canvas.width || current.x < 0) current.dir *= -1;
-            
-            // 積んだパンケーキ
-            ctx.fillStyle = "#ffb74d"; // パンケーキ色
+            ctx.fillStyle = "#ffb74d";
             layers.forEach(l => {
                 ctx.beginPath();
                 ctx.roundRect(l.x, l.y, l.w, 35, 10);
                 ctx.fill();
-                ctx.strokeStyle = "#e65100";
-                ctx.lineWidth = 2;
-                ctx.stroke();
             });
-            
-            // 動いているパンケーキ
-            ctx.fillStyle = "#f06292"; // 現在の層
+            ctx.fillStyle = "#f06292";
             ctx.beginPath();
             ctx.roundRect(current.x, current.y, current.w, 35, 10);
             ctx.fill();
-            
             requestAnimationFrame(update);
         }
 
@@ -169,8 +134,8 @@
                 bestText.innerText = "BEST: " + bestScore;
             }
             document.getElementById("menuTitle").innerText = "崩れちゃった！";
-            document.getElementById("menuDesc").innerText = "今回の記録: " + score + "段";
-            goButton.innerText = "もう一度焼く！";
+            document.getElementById("menuDesc").innerText = "記録: " + score + "段";
+            goButton.innerText = "リトライ！";
             adMid.style.display = "flex"; 
             menuScreen.style.display = "flex";
             menuScreen.scrollTop = 0;
