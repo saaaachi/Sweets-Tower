@@ -5,71 +5,184 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sweets Tower - 第26弾</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #fce4ec; font-family: sans-serif; touch-action: none; }
+        * { box-sizing: border-box; }
+        body { margin: 0; overflow: hidden; background: #fce4ec; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
+        
+        /* 上下広告エリア */
         #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
         #ad-top { top: 0; } #ad-bottom { bottom: 0; }
         iframe { border: none; width: 100%; height: 150px; }
-        canvas { display: block; margin-top: 150px; background: #fff1f2; }
-        #ui { position: absolute; top: 160px; left: 0; width: 100%; text-align: center; color: #ad1457; font-size: 24px; font-weight: bold; pointer-events: none; }
-        #startScreen { position: absolute; top: 150px; left: 0; width: 100%; height: calc(100vh - 300px); background: rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
-        #goButton { padding: 15px 45px; font-size: 24px; background: #f06292; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; }
+
+        /* ゲームエリア */
+        #game-outer { position: absolute; top: 150px; bottom: 150px; left: 0; right: 0; background: #fff1f2; overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; }
+        #ui { position: absolute; top: 10px; left: 0; width: 100%; text-align: center; color: #ad1457; font-size: 24px; font-weight: bold; pointer-events: none; z-index: 10; text-shadow: 1px 1px 0 white; }
+
+        /* メニュー画面（スクロール対応） */
+        #menuScreen { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(255,255,255,0.95); display: flex; flex-direction: column; 
+            align-items: center; justify-content: flex-start; z-index: 50; 
+            padding: 10px 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+        }
+
+        #ad-middle-container { width: 300px; height: 140px; background: #000; margin: 10px 0; display: none; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0; }
+
+        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 10px; padding-bottom: 30px; }
+        #goButton { padding: 15px 0; font-size: 22px; background: #f06292; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; width: 240px; box-shadow: 0 5px #d81b60; }
+        .link-btn { padding: 12px 0; font-size: 14px; background: #9b59b6; border: none; border-radius: 50px; color: white; font-weight: bold; text-decoration: none; width: 240px; text-align: center; box-shadow: 0 4px #8e44ad; }
     </style>
 </head>
 <body>
+
     <div id="ad-top"><iframe src="ad.html"></iframe></div>
+
+    <div id="game-outer">
+        <div id="ui">TOWER: 0</div>
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="menuScreen">
+            <h1 id="menuTitle" style="color:#f06292; margin: 5px 0; font-size: 28px;">Sweets Tower</h1>
+            <p id="menuDesc" style="text-align: center; margin: 5px 0; font-size: 14px; color: #880e4f;">
+                タイミングよくタップして<br>パンケーキを高く積もう！🥞
+            </p>
+            
+            <p id="bestScoreText" style="margin: 5px 0; color:#ad1457; font-weight: bold;">BEST: 0</p>
+
+            <div id="ad-middle-container">
+                <script src="https://adm.shinobi.jp/s/1e6de436ea850948e238e975a93767eb"></script>
+            </div>
+
+            <div class="btn-group">
+                <button id="goButton">開店！</button>
+                <a href="https://saaaachi.github.io/Speedy-BBQ/" class="link-btn">他のゲームはこちら</a>
+            </div>
+        </div>
+    </div>
+
     <div id="ad-bottom"><iframe src="ad.html"></iframe></div>
-    <div id="startScreen"><h1>Sweets Tower</h1><p>タイミングよくタップして<br>パンケーキを高く積もう！🥞</p><button id="goButton">開店！</button></div>
-    <div id="ui">TOWER: 0</div>
-    <canvas id="gameCanvas"></canvas>
+
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight - 300;
-        let score = 0, gameActive = false, speed = 3;
-        let layers = []; // {x, y, w}
-        let current = { x: 0, w: 150, dir: 1 };
+        const gameOuter = document.getElementById("game-outer");
+        const menuScreen = document.getElementById("menuScreen");
+        const adMid = document.getElementById("ad-middle-container");
+        const goButton = document.getElementById("goButton");
+        const bestText = document.getElementById("bestScoreText");
 
-        document.getElementById("goButton").onclick = () => {
-            document.getElementById("startScreen").style.display = "none";
-            gameActive = true; score = 0; layers = [{x: canvas.width/2 - 75, w: 150, y: canvas.height - 40}];
-            current = { x: 0, w: 150, dir: 1, y: canvas.height - 80 };
+        function resize() {
+            canvas.width = gameOuter.clientWidth;
+            canvas.height = gameOuter.clientHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let score = 0, bestScore = localStorage.getItem("tower_best") || 0, gameActive = false, speed = 3;
+        let layers = [];
+        let current = { x: 0, w: 150, dir: 1, y: 0 };
+        bestText.innerText = "BEST: " + bestScore;
+
+        goButton.onclick = () => {
+            menuScreen.style.display = "none";
+            gameActive = true;
+            score = 0;
+            speed = 3 + (window.innerWidth < 400 ? 1 : 0); // スマホは少し調整
+            document.getElementById("ui").innerText = "TOWER: 0";
+            layers = [{x: canvas.width/2 - 75, w: 150, y: canvas.height - 50}];
+            current = { x: 0, w: 150, dir: 1, y: canvas.height - 90 };
             update();
         };
 
-        window.addEventListener("touchstart", () => {
+        // タップ操作
+        window.addEventListener("touchstart", (e) => {
             if(!gameActive) return;
+            e.preventDefault();
+            stackLayer();
+        }, {passive: false});
+
+        function stackLayer() {
             let last = layers[layers.length - 1];
             let diff = current.x - last.x;
-            if(Math.abs(diff) >= current.w) { gameOver(); return; }
             
-            // はみ出た分を削る
-            if(diff > 0) { current.w -= diff; } else { current.w += diff; current.x = last.x; }
+            if(Math.abs(diff) >= current.w) {
+                gameOver();
+                return;
+            }
+            
+            // 重なっている部分だけを残す
+            if(diff > 0) {
+                current.w -= diff;
+            } else {
+                current.w += diff;
+                current.x = last.x;
+            }
             
             layers.push({x: current.x, y: current.y, w: current.w});
-            score++; document.getElementById("ui").innerText = "TOWER: " + score;
+            score++;
+            document.getElementById("ui").innerText = "TOWER: " + score;
             
-            // 次の層へ（画面がたまるとスクロール）
-            if(layers.length > 5) layers.forEach(l => l.y += 40);
-            else current.y -= 40;
-            current.x = 0; speed += 0.2;
-        });
+            // 上昇演出
+            if(layers.length > 6) {
+                layers.forEach(l => l.y += 40);
+            } else {
+                current.y -= 40;
+            }
+            
+            current.x = 0;
+            speed += 0.15;
+            current.dir = 1;
+        }
 
         function update() {
             if(!gameActive) return;
             ctx.clearRect(0,0,canvas.width, canvas.height);
+            
             current.x += speed * current.dir;
             if(current.x + current.w > canvas.width || current.x < 0) current.dir *= -1;
             
-            ctx.fillStyle = "#ffb74d";
-            layers.forEach(l => ctx.fillRect(l.x, l.y, l.w, 35));
-            ctx.fillStyle = "#f06292";
-            ctx.fillRect(current.x, current.y, current.w, 35);
+            // 積んだパンケーキ
+            ctx.fillStyle = "#ffb74d"; // パンケーキ色
+            layers.forEach(l => {
+                ctx.beginPath();
+                ctx.roundRect(l.x, l.y, l.w, 35, 10);
+                ctx.fill();
+                ctx.strokeStyle = "#e65100";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+            
+            // 動いているパンケーキ
+            ctx.fillStyle = "#f06292"; // 現在の層
+            ctx.beginPath();
+            ctx.roundRect(current.x, current.y, current.w, 35, 10);
+            ctx.fill();
+            
             requestAnimationFrame(update);
         }
 
-        function gameOver() { gameActive = false; alert("崩れちゃった！ SCORE: " + score); location.reload(); }
-        setInterval(() => { const fs = document.querySelectorAll('iframe'); fs.forEach(f => { const s = f.src; f.src = "about:blank"; setTimeout(() => f.src = s, 100); }); }, 30000);
+        function gameOver() {
+            gameActive = false;
+            if(score > bestScore) {
+                bestScore = score;
+                localStorage.setItem("tower_best", bestScore);
+                bestText.innerText = "BEST: " + bestScore;
+            }
+            document.getElementById("menuTitle").innerText = "崩れちゃった！";
+            document.getElementById("menuDesc").innerText = "今回の記録: " + score + "段";
+            goButton.innerText = "もう一度焼く！";
+            adMid.style.display = "flex"; 
+            menuScreen.style.display = "flex";
+            menuScreen.scrollTop = 0;
+        }
+
+        setInterval(() => {
+            const fs = document.querySelectorAll('iframe');
+            fs.forEach(f => {
+                const s = f.src; f.src = "about:blank";
+                setTimeout(() => f.src = s, 100);
+            });
+        }, 30000);
     </script>
 </body>
 </html>
