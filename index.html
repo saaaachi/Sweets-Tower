@@ -3,100 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sweets Tower - v26.5</title>
+    <title>Sweets Tower - Pancake Stack</title>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1299640300068792" crossorigin="anonymous"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; overflow: hidden; background: #fce4ec; font-family: sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; overflow: hidden; background: #fce4ec; font-family: 'Hiragino Sans', 'Meiryo', sans-serif; touch-action: none; position: fixed; width: 100%; height: 100%; }
         
-        /* 広告枠：150px (共通仕様) */
-        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #333; z-index: 100; display: flex; align-items: center; justify-content: center; }
-        #ad-top { top: 0; border-bottom: 1px solid #444; } 
-        #ad-bottom { bottom: 0; border-top: 1px solid #444; }
-        iframe { border: none; width: 100%; height: 150px; background: #333; }
-
+        /* 上下広告枠：150px (共通仕様) */
+        #ad-top, #ad-bottom { position: fixed; left: 0; width: 100%; height: 150px; background: #1a1a1a; z-index: 100; display: flex; align-items: center; justify-content: center; border-bottom: 3px solid #f06292; }
+        #ad-bottom { bottom: 0; border-top: 3px solid #f06292; border-bottom: none; }
+        
         /* ゲーム本体エリア */
         #game-outer { position: absolute; top: 150px; bottom: 150px; left: 0; right: 0; background: #fff1f2; overflow: hidden; }
         canvas { display: block; width: 100%; height: 100%; }
-        #ui { position: absolute; top: 10px; left: 0; width: 100%; text-align: center; color: #ad1457; font-size: 24px; font-weight: bold; pointer-events: none; z-index: 10; text-shadow: 1px 1px 0 white; }
+        #ui { position: absolute; top: 15px; left: 0; width: 100%; text-align: center; color: #ad1457; font-size: 28px; font-weight: bold; pointer-events: none; z-index: 10; text-shadow: 2px 2px 0 white; letter-spacing: 1px; }
 
-        /* メニュー画面 */
+        /* メニュー/リザルト画面 */
         #menuScreen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(255,255,255,0.96); display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; z-index: 200; 
-            padding: 20px 0;
+            align-items: center; justify-content: center; z-index: 500; padding: 20px;
         }
 
-        /* 中央広告（i-mobile） */
-        #ad-middle-container { 
-            width: 320px; height: 100px; background: #eee; margin: 15px 0; 
+        #bestScoreText { margin: 5px 0 15px 0; color:#ad1457; font-weight: bold; font-size: 20px; background: #fff; padding: 5px 20px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        /* 【収益】300x250 レクタングル広告 */
+        #ad-middle-box { 
+            width: 300px; height: 250px; background: #f9f9f9; margin: 15px 0; 
             display: none; justify-content: center; align-items: center; 
-            overflow: hidden; flex-shrink: 0; border: 1px solid #ddd;
-            transition: opacity 0.3s;
+            border-radius: 15px; border: 1px solid #ffc1e3; overflow: hidden;
         }
 
-        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 12px; }
-        #goButton { width: 240px; padding: 15px; font-size: 18px; background: #f06292; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px #d81b60; transition: 0.2s; }
-        #goButton:disabled { background: #ccc; box-shadow: none; color: #888; cursor: default; }
-        .link-btn { width: 240px; padding: 12px; font-size: 15px; background: #9b59b6; border: none; border-radius: 50px; color: white; font-weight: bold; text-decoration: none; text-align: center; box-shadow: 0 4px #8e44ad; }
+        .btn-group { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 15px; }
+        .main-btn { width: 270px; padding: 18px; font-size: 20px; background: #f06292; border: none; border-radius: 50px; color: white; font-weight: bold; cursor: pointer; box-shadow: 0 5px #d81b60; transition: 0.1s; }
+        .main-btn:active { transform: translateY(3px); box-shadow: 0 2px #d81b60; }
+        .main-btn:disabled { background: #ccc; box-shadow: none; color: #eee; }
+        
+        .sub-btn { width: 270px; padding: 14px; font-size: 16px; background: #9b59b6; border: none; border-radius: 50px; color: white; font-weight: bold; text-decoration: none; text-align: center; box-shadow: 0 5px #8e44ad; }
 
-        /* 大広告用カウントダウン付き */
-        #bigAdScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; display: none; justify-content: center; align-items: center; }
-        .ad-frame-wrapper { width: 95%; height: 85%; position: relative; }
-        .ad-close-btn { 
-            position: absolute; top: -15px; right: -15px; 
-            color: white; font-size: 22px; font-weight: bold; 
-            cursor: pointer; background: rgba(0,0,0,0.8); 
-            width: 44px; height: 44px; border-radius: 50%; 
-            display: none; align-items: center; justify-content: center; 
-            z-index: 3100; border: 2px solid white; font-family: sans-serif;
-        }
+        /* インタースティシャル広告 */
+        #inter-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 99999; align-items: center; justify-content: center; }
+        .inter-content { width: 330px; height: 350px; background: #fff; position: relative; border-radius: 15px; }
+        #close-ad-btn { position: absolute; top: -55px; right: 0; width: 45px; height: 45px; background: #333; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 2px solid #fff; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="ad-top"><iframe id="frame-top" src="./ad.html?pos=top"></iframe></div>
+    <div id="ad-top">
+        <ins class="adsbygoogle" style="display:inline-block;width:320px;height:100px" data-ad-client="ca-pub-1299640300068792" data-ad-slot="3972022911"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
 
     <div id="game-outer">
         <div id="ui">TOWER: 0</div>
         <canvas id="gameCanvas"></canvas>
 
         <div id="menuScreen">
-            <h1 id="menuTitle" style="color:#f06292; margin: 5px 0; font-size: 26px;">Sweets Tower</h1>
-            <p id="menuDesc" style="text-align: center; margin: 0 0 10px 0; font-size: 14px; color: #880e4f;">パンケーキを高く積もう！🥞</p>
-            <p id="bestScoreText" style="margin: 0 0 15px 0; color:#ad1457; font-weight: bold; font-size: 18px;">BEST: 0</p>
+            <h1 id="menuTitle" style="color:#f06292; margin: 0; font-size: 32px; text-shadow: 1px 1px 0 #ad1457;">Sweets Tower</h1>
+            <p id="menuDesc" style="text-align: center; margin: 5px 0; font-size: 16px; color: #880e4f; font-weight: bold;">パンケーキを高く積もう！🥞</p>
+            <div id="bestScoreText">BEST: 0</div>
 
-            <div id="ad-middle-container">
-                <div id="im-8b492cea6667490da71c488bdcc7cfc8">
-                    <script async src="https://imp-adedge.i-mobile.co.jp/script/v1/spot.js?20220104"></script>
-                    <script>(window.adsbyimobile=window.adsbyimobile||[]).push({pid:84561,mid:590804,asid:1924211,type:"banner",display:"inline",elementid:"im-8b492cea6667490da71c488bdcc7cfc8"})</script>
-                </div>
+            <div id="ad-middle-box">
+                <ins class="adsbygoogle" style="display:inline-block;width:300px;height:250px" data-ad-client="ca-pub-1299640300068792" data-ad-slot="9050127185"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
             </div>
 
             <div class="btn-group">
-                <button id="goButton">開店！</button>
-                <a href="https://saaaachi.github.io/" class="link-btn">他のゲームはこちら</a>
+                <button id="goButton" class="main-btn">開店！</button>
+                <a href="https://saaaachi.github.io/" class="sub-btn">他のゲームも遊ぶ</a>
             </div>
         </div>
 
-        <div id="bigAdScreen">
-            <div class="ad-frame-wrapper">
-                <div id="ad-close-btn" class="ad-close-btn" onclick="closeBigAd()"></div>
-                <iframe id="ad-large-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
+        <div id="inter-screen">
+            <div class="inter-content">
+                <div id="close-ad-btn" onclick="closeInterAd()">5</div>
+                <iframe id="ifr-inter" src="about:blank" style="width:100%; height:100%; border:none; border-radius:15px; background:#fff;"></iframe>
             </div>
         </div>
     </div>
 
-    <div id="ad-bottom"><iframe id="frame-bottom" src="./ad.html?pos=bottom"></iframe></div>
+    <div id="ad-bottom">
+        <ins class="adsbygoogle" style="display:inline-block;width:320px;height:100px" data-ad-client="ca-pub-1299640300068792" data-ad-slot="3972022911"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
 
     <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        const gameOuter = document.getElementById("game-outer");
-        const menuScreen = document.getElementById("menuScreen");
-        const adMid = document.getElementById("ad-middle-container");
-        const goButton = document.getElementById("goButton");
-        const bestText = document.getElementById("bestScoreText");
+        const canvas = document.getElementById("gameCanvas"), ctx = canvas.getContext("2d"), gameOuter = document.getElementById("game-outer"), menuScreen = document.getElementById("menuScreen"), adMid = document.getElementById("ad-middle-box"), goButton = document.getElementById("goButton"), bestText = document.getElementById("bestScoreText");
 
         function resize() {
             canvas.width = gameOuter.clientWidth;
@@ -111,14 +103,11 @@
         bestText.innerText = "BEST: " + bestScore;
 
         goButton.onclick = () => {
-            menuScreen.style.display = "none";
-            adMid.style.display = "none";
-            gameActive = true;
-            score = 0;
-            speed = 3;
+            menuScreen.style.display = "none"; adMid.style.display = "none";
+            gameActive = true; score = 0; speed = 3.2;
             document.getElementById("ui").innerText = "TOWER: 0";
-            layers = [{x: canvas.width/2 - 60, w: 120, y: canvas.height - 40}];
-            current = { x: 0, w: 120, dir: 1, y: canvas.height - 80 };
+            layers = [{x: canvas.width/2 - 70, w: 140, y: canvas.height - 50}];
+            current = { x: 0, w: 140, dir: 1, y: canvas.height - 95 };
             update();
         };
 
@@ -131,95 +120,110 @@
         function stackLayer() {
             let last = layers[layers.length - 1];
             let diff = current.x - last.x;
+            
             if(Math.abs(diff) >= current.w) { gameOver(); return; }
-            if(diff > 0) { current.w -= diff; } else { current.w += diff; current.x = last.x; }
+            
+            if(diff > 0) { current.w -= diff; } 
+            else { current.w += diff; current.x = last.x; }
+            
             layers.push({x: current.x, y: current.y, w: current.w});
             score++;
             document.getElementById("ui").innerText = "TOWER: " + score;
-            if(layers.length > 6) { layers.forEach(l => l.y += 40); } else { current.y -= 40; }
-            current.x = 0; speed += 0.15;
+            
+            // 画面をスクロールさせる（6段目以降）
+            if(layers.length > 5) {
+                layers.forEach(l => l.y += 45);
+            } else {
+                current.y -= 45;
+            }
+            
+            current.x = 0; 
+            speed += 0.18; // 徐々に加速
+            if(speed > 10) speed = 10;
         }
 
         function update() {
             if(!gameActive) return;
             ctx.clearRect(0,0,canvas.width, canvas.height);
+            
             current.x += speed * current.dir;
             if(current.x + current.w > canvas.width || current.x < 0) current.dir *= -1;
             
+            // 積まれたレイヤー（パンケーキ色）
             ctx.fillStyle = "#ffb74d";
+            ctx.strokeStyle = "#e67e22";
+            ctx.lineWidth = 2;
             layers.forEach(l => {
-                ctx.beginPath();
-                if(ctx.roundRect) ctx.roundRect(l.x, l.y, l.w, 35, 10); else ctx.rect(l.x, l.y, l.w, 35);
-                ctx.fill();
+                drawRoundRect(l.x, l.y, l.w, 40, 15);
             });
             
+            // 動いているレイヤー（ピンクのトッピング風）
             ctx.fillStyle = "#f06292";
-            ctx.beginPath();
-            if(ctx.roundRect) ctx.roundRect(current.x, current.y, current.w, 35, 10); else ctx.rect(current.x, current.y, current.w, 35);
-            ctx.fill();
+            drawRoundRect(current.x, current.y, current.w, 40, 15);
+            
             requestAnimationFrame(update);
         }
 
+        function drawRoundRect(x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
         function gameOver() {
-            gameActive = false;
-            playCount++;
+            gameActive = false; playCount++;
             if(score > bestScore) {
                 bestScore = score;
                 localStorage.setItem("tower_best", bestScore);
                 bestText.innerText = "BEST: " + bestScore;
             }
 
-            // --- ✨ 誤タップ防止ガード (1.5秒) ---
+            // 誤タップ防止ガード
             goButton.innerText = "お待ちください...";
             goButton.disabled = true;
             adMid.style.display = "flex";
-            adMid.style.pointerEvents = "none";
-            adMid.style.opacity = "0.4";
 
-            document.getElementById("menuTitle").innerText = "崩れちゃった！";
-            document.getElementById("menuDesc").innerText = "記録: " + score + "段";
+            document.getElementById("menuTitle").innerText = "崩れちゃった！💦";
+            document.getElementById("menuDesc").innerText = "今回の記録: " + score + "段";
             menuScreen.style.display = "flex";
 
             setTimeout(() => {
-                adMid.style.pointerEvents = "auto";
-                adMid.style.opacity = "1";
                 goButton.disabled = false;
-                goButton.innerText = "リトライ！";
+                goButton.innerText = "もう一度焼く！";
             }, 1500);
 
-            // 大広告判定
+            // インタースティシャル判定（初回3回目、以降7回ごと）
             if (playCount === 3 || (playCount > 3 && (playCount - 3) % 7 === 0)) {
-                setTimeout(showBigAd, 500);
+                setTimeout(showInterAd, 500);
             }
         }
 
-        function showBigAd() {
-            const screen = document.getElementById("bigAdScreen");
-            const closeBtn = document.getElementById("ad-close-btn");
-            document.getElementById("ad-large-frame").src = "./ad.large.html?t=" + Date.now();
+        function showInterAd() {
+            const screen = document.getElementById("inter-screen"), closeBtn = document.getElementById("close-ad-btn"), ifr = document.getElementById('ifr-inter');
+            ifr.src = './ad.large.html?v=' + Date.now();
             screen.style.display = "flex";
-            
-            let countdown = 5;
-            closeBtn.style.display = "flex";
-            closeBtn.innerText = countdown;
-            closeBtn.style.pointerEvents = "none";
-            closeBtn.style.opacity = "0.7";
-
-            const timerInt = setInterval(() => {
-                countdown--;
-                closeBtn.innerText = countdown;
-                if (countdown <= 0) {
-                    clearInterval(timerInt);
+            let timerVal = 5;
+            closeBtn.innerText = timerVal; closeBtn.style.pointerEvents = "none";
+            const countdown = setInterval(() => {
+                timerVal--;
+                if (timerVal > 0) closeBtn.innerText = timerVal;
+                else {
+                    clearInterval(countdown);
                     closeBtn.innerText = "×";
                     closeBtn.style.pointerEvents = "auto";
-                    closeBtn.style.opacity = "1";
                 }
             }, 1000);
         }
 
-        function closeBigAd() {
-            document.getElementById("bigAdScreen").style.display = "none";
-            document.getElementById("ad-large-frame").src = "";
+        function closeInterAd() {
+            document.getElementById("inter-screen").style.display = "none";
+            document.getElementById('ifr-inter').src = 'about:blank';
         }
     </script>
 </body>
